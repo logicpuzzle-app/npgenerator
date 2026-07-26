@@ -1,0 +1,6 @@
+.DS_Store
+java/build/
+rust/target/
+typescript/node_modules/
+__pycache__/
+*.pyc

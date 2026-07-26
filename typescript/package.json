@@ -1,0 +1,17 @@
+{
+  "name": "npgen2007-typescript",
+  "version": "2.0.2",
+  "private": true,
+  "type": "module",
+  "description": "TypeScript rewrite of NPGenerator 2007 V2.0.2",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "npgen": "node --import tsx src/cli.ts",
+    "verify": "sh verify.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}

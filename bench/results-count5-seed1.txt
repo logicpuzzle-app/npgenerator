@@ -1,0 +1,22 @@
+# NPGenerator 2007 rewrite benchmark
+# bench --count 5 --seed 1 / arm64 / Apple M4 Pro
+
+== Rust (release) ==
+COUNT 5
+SUCCEEDED 5
+ELAPSED_MS 4551
+
+== Java (openjdk 17) ==
+COUNT 5
+SUCCEEDED 5
+ELAPSED_MS 4052
+
+== TypeScript (node22 + tsx) ==
+COUNT 5
+SUCCEEDED 5
+ELAPSED_MS 5577
+
+== Python (CPython 3.12.2) ==
+COUNT 5
+SUCCEEDED 5
+ELAPSED_MS 151054
