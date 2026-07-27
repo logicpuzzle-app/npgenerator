@@ -32,7 +32,7 @@ import {
 
 const SOLVE_OPTIONS = new Set(["--use", "--unique"]);
 const GENERATE_OPTIONS = new Set([
-  "--use", "--unique", "--dp-min", "--dp-max",
+  "--use", "--unique", "--dp-min", "--dp-max", "--attempts",
 ]);
 const VARIANT_OPTIONS = new Set([
   "--size", "--blocks", "--seed", "--format", "--out",
@@ -223,7 +223,18 @@ function commandOptions(
   ) {
     throw new Error(`--forbidden must be between 1 and ${size}`);
   }
-  return { method, dpMin, dpMax, forbidden };
+  const attempts = parsed.integer("--attempts", 100);
+  if (attempts < 0) throw new Error("--attempts must be non-negative");
+  return { method, dpMin, dpMax, forbidden, attempts };
+}
+
+function answerKindName(kind: KindOfAnswer): string {
+  switch (kind) {
+    case KindOfAnswer.NO_ANSWER: return "NO_ANSWER";
+    case KindOfAnswer.IRREGULAR_PROBLEM: return "IRREGULAR_PROBLEM";
+    case KindOfAnswer.MULTIPLE_ANSWER: return "MULTIPLE_ANSWER";
+    default: throw new Error("unexpected unsuccessful solve status");
+  }
 }
 
 function validateValues(
@@ -399,7 +410,10 @@ async function run(args: string[]): Promise<number> {
           (parsed.has("--use") || parsed.has("--unique")) &&
           result.status !== KindOfAnswer.UNIQUE_ANSWER
         )
-      ) return 1;
+      ) {
+        console.error(`RESULT ${answerKindName(result.status)}`);
+        return 1;
+      }
       if (xmlOutput(parsed)) {
         await outputXml(
           parsed,
@@ -473,7 +487,12 @@ async function run(args: string[]): Promise<number> {
         hidden,
         initialSeed,
       );
-      if (result === undefined) return 1;
+      if (result === undefined) {
+        console.error(
+          `RESULT GENERATE_FAILED attempts=${options.attempts ?? 100}`,
+        );
+        return 1;
+      }
       if (xmlOutput(parsed)) {
         await outputXml(
           parsed,
@@ -520,7 +539,12 @@ async function run(args: string[]): Promise<number> {
       validateRandomHints(size, hints, symmetry);
       const options = commandOptions(parsed, true, size);
       const result = generateRandom(hints, random, options, variant, symmetry);
-      if (result === undefined) return 1;
+      if (result === undefined) {
+        console.error(
+          `RESULT GENERATE_FAILED attempts=${options.attempts ?? 100}`,
+        );
+        return 1;
+      }
       if (xmlOutput(parsed)) {
         await outputXml(
           parsed,

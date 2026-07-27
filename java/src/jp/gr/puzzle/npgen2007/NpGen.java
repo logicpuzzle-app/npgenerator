@@ -20,7 +20,7 @@ public final class NpGen {
     private static final Set<String> SOLVE_OPTIONS =
             Set.of("--use", "--unique");
     private static final Set<String> GENERATE_OPTIONS =
-            Set.of("--use", "--unique", "--dp-min", "--dp-max");
+            Set.of("--use", "--unique", "--dp-min", "--dp-max", "--attempts");
     private static final Set<String> VARIANT_OPTIONS =
             Set.of("--size", "--blocks", "--seed", "--format", "--out");
     private static final Set<String> VARIANT_FLAGS =
@@ -104,6 +104,7 @@ public final class NpGen {
                 || result.status == Solver.KindOfAnswer.IRREGULAR_PROBLEM
                 || ((parsed.has("--use") || parsed.has("--unique"))
                         && result.status != Solver.KindOfAnswer.UNIQUE_ANSWER)) {
+            System.err.println("RESULT " + result.status.name());
             return 1;
         }
         if (xmlOutput(parsed)) {
@@ -172,6 +173,8 @@ public final class NpGen {
         Generated result = generate(
                 pattern, hidden, initialSeed, random, options, variant);
         if (result == null) {
+            System.err.println(
+                    "RESULT GENERATE_FAILED attempts=" + options.attempts);
             return 1;
         }
         if (xmlOutput(parsed)) {
@@ -204,6 +207,8 @@ public final class NpGen {
         RandomGenerated randomGenerated =
                 generateRandom(hints, random, options, variant, symmetry);
         if (randomGenerated == null) {
+            System.err.println(
+                    "RESULT GENERATE_FAILED attempts=" + options.attempts);
             return 1;
         }
         if (xmlOutput(parsed)) {
@@ -236,7 +241,8 @@ public final class NpGen {
         for (int index = 0; index < count; index++) {
             if (generateRandom(
                     20, random,
-                    new CommandOptions(allMethods(), 0, Integer.MAX_VALUE, -1),
+                    new CommandOptions(
+                            allMethods(), 0, Integer.MAX_VALUE, -1, 100),
                     variant, Symmetry.ROT4) != null) {
                 succeeded++;
             }
@@ -285,7 +291,8 @@ public final class NpGen {
                 DEFAULT_SIZE, null, true, true, false, random, false);
         return generate(
                 pattern, new int[DEFAULT_SIZE * DEFAULT_SIZE], null, random,
-                new CommandOptions(allMethods(), 0, Integer.MAX_VALUE, -1),
+                new CommandOptions(
+                        allMethods(), 0, Integer.MAX_VALUE, -1, 100),
                 variant);
     }
 
@@ -297,7 +304,9 @@ public final class NpGen {
                 random, initialSeed);
         generator.setMethod(options.method);
         generator.setForbidden(options.forbidden);
-        for (int attempt = 0; attempt < 100; attempt++) {
+        for (int attempt = 0;
+                options.attempts == 0 || attempt < options.attempts;
+                attempt++) {
             int[] problem = generator.generate();
             if (problem != null) {
                 SolveResult solved = solve(problem, options.method, variant);
@@ -315,7 +324,9 @@ public final class NpGen {
     private static RandomGenerated generateRandom(
             int hints, JavaRandom random, CommandOptions options, Variant variant,
             Symmetry symmetry) {
-        for (int patternAttempt = 0; patternAttempt < 100; patternAttempt++) {
+        for (int patternAttempt = 0;
+                options.attempts == 0 || patternAttempt < options.attempts;
+                patternAttempt++) {
             int[] pattern = randomPattern(variant.size, hints, random, symmetry);
             Generated generated = generate(
                     pattern, new int[variant.size * variant.size], null,
@@ -581,7 +592,11 @@ public final class NpGen {
             throw new IllegalArgumentException(
                     "--forbidden must be between 1 and " + size);
         }
-        return new CommandOptions(method, lower, upper, forbidden);
+        int attempts = parsed.intValue("--attempts", 100);
+        if (attempts < 0) {
+            throw new IllegalArgumentException("--attempts must be non-negative");
+        }
+        return new CommandOptions(method, lower, upper, forbidden, attempts);
     }
 
     private static SolverMethod solverMethod(ParsedOptions parsed) {
@@ -846,7 +861,8 @@ public final class NpGen {
     }
 
     private record CommandOptions(
-            SolverMethod method, int dpMin, int dpMax, int forbidden) {
+            SolverMethod method, int dpMin, int dpMax, int forbidden,
+            int attempts) {
     }
 
     private record Variant(

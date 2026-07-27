@@ -33,7 +33,9 @@ LONG_MIN = -(1 << 63)
 LONG_MAX = (1 << 63) - 1
 INTEGER_PATTERN = re.compile(r"[+-]?[0-9]+")
 SOLVER_OPTIONS = {"--use", "--unique"}
-GENERATOR_OPTIONS = SOLVER_OPTIONS | {"--dp-min", "--dp-max"}
+GENERATOR_OPTIONS = SOLVER_OPTIONS | {
+    "--dp-min", "--dp-max", "--attempts"
+}
 VARIANT_OPTIONS = {"--size", "--blocks", "--seed", "--format", "--out"}
 FLAG_OPTIONS = {"--diagonal", "--no-vertical", "--no-horizontal"}
 SYMMETRIES = {"rot4", "rot2", "mirror-h", "mirror-v", "none"}
@@ -45,6 +47,7 @@ class CommandOptions:
     dp_min: int
     dp_max: int
     forbidden: int
+    attempts: int
 
 
 def _parse_symmetry(value: str | None) -> Symmetry:
@@ -243,7 +246,10 @@ def _command_options(
         and not 1 <= forbidden <= size
     ):
         raise ValueError(f"--forbidden must be between 1 and {size}")
-    return CommandOptions(method, lower, upper, forbidden)
+    attempts = _int_option(args, start, "--attempts", 100)
+    if attempts < 0:
+        raise ValueError("--attempts must be non-negative")
+    return CommandOptions(method, lower, upper, forbidden, attempts)
 
 
 def _float_text(value: float) -> str:
@@ -430,6 +436,7 @@ def run(args: Sequence[str]) -> int:
             )
             and result.status is not KindOfAnswer.UNIQUE_ANSWER
         ):
+            sys.stderr.write(f"RESULT {result.status.name}\n")
             return 1
         if _xml_output(args, 2):
             hidden = (
@@ -511,8 +518,12 @@ def run(args: Sequence[str]) -> int:
             None if not xml_input else (
                 None if source.seed is None else list(source.seed)
             ),
+            options.attempts,
         )
         if result is None:
+            sys.stderr.write(
+                f"RESULT GENERATE_FAILED attempts={options.attempts}\n"
+            )
             return 1
         if _xml_output(args, 2):
             _write_xml(
@@ -567,8 +578,12 @@ def run(args: Sequence[str]) -> int:
             options.forbidden,
             variant,
             symmetry,
+            options.attempts,
         )
         if result is None:
+            sys.stderr.write(
+                f"RESULT GENERATE_FAILED attempts={options.attempts}\n"
+            )
             return 1
         pattern, generated = result
         if _xml_output(args, 1):

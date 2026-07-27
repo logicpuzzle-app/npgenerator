@@ -1092,8 +1092,8 @@ public class Evaluator {
 				added = true;
 			}
 			if(added) {
-				int p = Utility.random(cand.size());
-				addNumber(state, cand.get(p).getFirst(), cand.get(p).getSecond(),candPoint);
+				// int p = Utility.random(cand.size());
+				// addNumber(state, cand.get(p).getFirst(), cand.get(p).getSecond(),candPoint);
 				continue;
 			}
 			for(int block_idx = 0 ; block_idx < state.getBlockNum() ; block_idx++)
@@ -1124,8 +1124,8 @@ public class Evaluator {
 				if(added) break;
 			}
 			if(added) {
-				int p = Utility.random(cand.size());
-				addNumber(state, cand.get(p).getFirst(), cand.get(p).getSecond(),candPoint);
+				// int p = Utility.random(cand.size());
+				// addNumber(state, cand.get(p).getFirst(), cand.get(p).getSecond(),candPoint);
 				continue;
 			}
 			for(int block_idx = 0 ; block_idx < state.getBlockNum() ; block_idx++)
@@ -1157,8 +1157,8 @@ public class Evaluator {
 				if(added) break;
 			}
 			if(added) {
-				int p = Utility.random(cand.size());
-				addNumber(state, cand.get(p).getFirst(), cand.get(p).getSecond(),candPoint);
+				// int p = Utility.random(cand.size());
+				// addNumber(state, cand.get(p).getFirst(), cand.get(p).getSecond(),candPoint);
 				continue;
 			}
 			for(int cell_idx = 0 ; cell_idx < state.getCellSize() ; cell_idx++)

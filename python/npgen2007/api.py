@@ -71,6 +71,7 @@ def generate(
     variant: Variant = STANDARD_VARIANT,
     hidden: list[int] | None = None,
     initial_seed: list[int] | None = None,
+    attempts: int = 100,
 ) -> Generated | None:
     if method is None:
         method = SolverMethod.all()
@@ -86,7 +87,9 @@ def generate(
     )
     generator.set_method(method)
     generator.set_forbidden(forbidden)
-    for _ in range(100):
+    attempt = 0
+    while attempts == 0 or attempt < attempts:
+        attempt += 1
         problem = generator.generate()
         if problem is not None:
             result = solve(problem, method, variant)
@@ -153,10 +156,13 @@ def generate_random(
     forbidden: int = -1,
     variant: Variant = STANDARD_VARIANT,
     symmetry: Symmetry = "rot4",
+    attempts: int = 100,
 ) -> tuple[list[int], Generated] | None:
     if method is None:
         method = SolverMethod.all()
-    for _ in range(100):
+    attempt = 0
+    while attempts == 0 or attempt < attempts:
+        attempt += 1
         pattern = random_pattern(hints, random, variant.size, symmetry)
         generated = generate(
             pattern,
@@ -166,6 +172,7 @@ def generate_random(
             dp_max,
             forbidden,
             variant,
+            attempts=attempts,
         )
         if generated is not None:
             return pattern, generated

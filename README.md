@@ -36,6 +36,7 @@ npgen bench [--count N] [--seed N]             # 生成 N 回の所要時間を�
   --unique <list|none>    一意性判定 (vh,cell,block)
   --dp-min N / --dp-max N 難易度範囲(範囲外は捨てて再生成。solve では指定不可 = exit 2)
   --forbidden N           禁止数字(generate/random)
+  --attempts N            生成リトライ上限(generate/random、既定100、0は無制限)
   --size N                盤面サイズ 2..25
   --blocks WxH|random|@file  長方形 / ランダム分割(BlockSplit) / 自由形状ラベル格子
   --diagonal              対角線制約
@@ -43,7 +44,8 @@ npgen bench [--count N] [--seed N]             # 生成 N 回の所要時間を�
   --format xml / --out f.xml       原典互換 XML(seed・複数 group・comment・hint 保持)
 ```
 
-- CLI 既定は全手筋 ON(原典 GUI の既定は全 OFF — `--use none` で再現可)、dp-min 既定 0(GUI は 1)、生成リトライは 100 回上限(GUI は無限)
+- CLI 既定は全手筋 ON(原典 GUI の既定は全 OFF — `--use none` で再現可)、dp-min 既定 0(GUI は 1)。生成リトライは既定 100 回で、`--attempts 0` は GUI と同じ無制限
+- solve 失敗時と生成上限到達時は、stderr にそれぞれ `RESULT <解答状態>`、`RESULT GENERATE_FAILED attempts=N` を出力する
 - 対角制約の構築順は、XML 入力時は原典 `Utility.makeBlockConstraint`(対角が最後)、CLI `--diagonal` 時は GUI/`ProblemBuilder.build`(対角が先)にそれぞれ一致させている
 - `random --symmetry` は `rot4` が既定で、原典 `Random20.java` の出力を維持する。`rot2` / `mirror-h` / `mirror-v` / `none` は本リライト独自拡張。回転・鏡映モードは固定セルを除外し、`none` は 1 以上セル数未満の任意のヒント数を受け付ける
 
@@ -61,7 +63,9 @@ npgen bench [--count N] [--seed N]             # 生成 N 回の所要時間を�
 | Rust (release) | 26.2 秒 | **4.6 秒** | 5.8x |
 | TypeScript (node 22 + tsx) | 25.4 秒 | **5.6 秒** | 4.6x |
 | Python (CPython 3.12) | 437.7 秒 | **151.1 秒** | 2.9x |
+| Python (**PyPy 7.3 / 3.10**) | — | **15.9 秒** | 27.5x |
 
 - 4実装とも同一シードで同一の5問を生成(出力バイト一致)しての計測。ELAPSED_MS は各実装の内部計測(プロセス起動時間を含まない)
 - 最適化は出力バイト一致を維持したままの表現変更のみ: ブロック内候補位置ビットマスク(candPositions)、Status のバッファ再利用/in-place コピー、配列の平坦化(Java は `Integer[]`→`int[]`、TS は `Int32Array` 化)、localization の交差判定マスク化、popcount のインクリメンタル管理
 - 詳細な生値は `bench/results-count5-seed1.txt`
+- Python 実装は stdlib のみのため **PyPy でコード変更なしに実行可能**(`pypy3 python/npgen.py ...`)。solve/generate/random とも CPython と出力一致を確認済み

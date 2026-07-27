@@ -35,11 +35,13 @@ node --import tsx src/cli.ts bench [--count N] [--seed N]
 uniqueness names are `vh`, `cell`, and `block`. Omitting either list enables
 all of its entries. Supplying `none` alone disables all entries in that list.
 
-`generate` and `random` additionally accept `--dp-min N`, `--dp-max N`, and
-`--forbidden N` (1–size). Difficulty bounds are inclusive and are swapped
+`generate` and `random` additionally accept `--dp-min N`, `--dp-max N`,
+`--forbidden N` (1–size), and `--attempts N`. Difficulty bounds are inclusive and are swapped
 when given in reverse order; a negative maximum means unlimited. Difficulty
 bounds are generation filters and are rejected by `solve`. Out-of-range
 generated puzzles are discarded without resetting the random stream.
+`--attempts` defaults to 100 and accepts 0 for unlimited retries. Exit-1
+failures write a single `RESULT ...` detail line to stderr.
 
 `random` defaults to the original `Random20.java` four-way rotational
 symmetry (`rot4`), and explicitly selecting `rot4` produces the same bytes as

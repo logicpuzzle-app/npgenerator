@@ -230,9 +230,35 @@ $typescript_runner solve ../java/testdata/xml-vertical-off.xml --unique none \
 cmp "$verify_dir/java-unique-none" "$verify_dir/typescript-unique-none"
 
 set +e
+"$java_runner" solve ../java/testdata/no-answer.txt \
+    > "$verify_dir/java-no-answer.stdout" \
+    2> "$verify_dir/java-no-answer.stderr"
+java_no_answer_exit=$?
 $typescript_runner solve ../java/testdata/no-answer.txt \
     > "$verify_dir/no-answer.stdout" 2> "$verify_dir/no-answer.stderr"
 no_answer_exit=$?
+"$java_runner" random --hints 20 --seed 0 --attempts 1 \
+    > "$verify_dir/java-attempts-limited.stdout" \
+    2> "$verify_dir/java-attempts-limited.stderr"
+java_attempts_limited_exit=$?
+$typescript_runner random --hints 20 --seed 0 --attempts 1 \
+    > "$verify_dir/attempts-limited.stdout" \
+    2> "$verify_dir/attempts-limited.stderr"
+attempts_limited_exit=$?
+"$java_runner" generate ../java/testdata/pattern-heart.txt \
+    --seed 0 --attempts 1 \
+    > "$verify_dir/java-attempts-limited-generate.stdout" \
+    2> "$verify_dir/java-attempts-limited-generate.stderr"
+java_attempts_limited_generate_exit=$?
+$typescript_runner generate ../java/testdata/pattern-heart.txt \
+    --seed 0 --attempts 1 \
+    > "$verify_dir/attempts-limited-generate.stdout" \
+    2> "$verify_dir/attempts-limited-generate.stderr"
+attempts_limited_generate_exit=$?
+$typescript_runner generate ../java/testdata/pattern-heart.txt \
+    --seed 42 --attempts -1 > "$verify_dir/attempts-invalid.stdout" \
+    2> "$verify_dir/attempts-invalid.stderr"
+attempts_invalid_exit=$?
 $typescript_runner solve "$verify_dir/missing.txt" \
     > "$verify_dir/input-error.stdout" 2> "$verify_dir/input-error.stderr"
 input_error_exit=$?
@@ -245,7 +271,13 @@ $typescript_runner solve ../java/testdata/problem-heart.txt --dp-min 1 \
     2> "$verify_dir/typescript-solve-dp.stderr"
 typescript_solve_dp_exit=$?
 set -e
+test "$java_no_answer_exit" -eq 1
 test "$no_answer_exit" -eq 1
+test "$java_attempts_limited_exit" -eq 1
+test "$attempts_limited_exit" -eq 1
+test "$java_attempts_limited_generate_exit" -eq 1
+test "$attempts_limited_generate_exit" -eq 1
+test "$attempts_invalid_exit" -eq 2
 test "$input_error_exit" -eq 2
 test "$java_solve_dp_exit" -eq 2
 test "$typescript_solve_dp_exit" -eq 2
@@ -254,7 +286,27 @@ cmp "$verify_dir/java-solve-dp.stdout" \
 cmp "$verify_dir/java-solve-dp.stderr" \
     "$verify_dir/typescript-solve-dp.stderr"
 test ! -s "$verify_dir/no-answer.stdout"
-test ! -s "$verify_dir/no-answer.stderr"
+cmp "$verify_dir/java-no-answer.stderr" "$verify_dir/no-answer.stderr"
+test ! -s "$verify_dir/attempts-limited.stdout"
+cmp "$verify_dir/java-attempts-limited.stderr" \
+    "$verify_dir/attempts-limited.stderr"
+test ! -s "$verify_dir/attempts-limited-generate.stdout"
+cmp "$verify_dir/java-attempts-limited-generate.stderr" \
+    "$verify_dir/attempts-limited-generate.stderr"
+
+"$java_runner" generate ../java/testdata/pattern-heart.txt \
+    --seed 42 --attempts 0 > "$verify_dir/java-attempts-unlimited-generate"
+$typescript_runner generate ../java/testdata/pattern-heart.txt \
+    --seed 42 --attempts 0 \
+    > "$verify_dir/typescript-attempts-unlimited-generate"
+cmp "$verify_dir/java-attempts-unlimited-generate" \
+    "$verify_dir/typescript-attempts-unlimited-generate"
+"$java_runner" random --hints 20 --seed 40 --attempts 0 \
+    > "$verify_dir/java-attempts-unlimited-random"
+$typescript_runner random --hints 20 --seed 40 --attempts 0 \
+    > "$verify_dir/typescript-attempts-unlimited-random"
+cmp "$verify_dir/java-attempts-unlimited-random" \
+    "$verify_dir/typescript-attempts-unlimited-random"
 
 $typescript_runner bench --count 1 --seed 1 > "$verify_dir/bench"
 grep -q '^COUNT 1$' "$verify_dir/bench"
@@ -264,4 +316,5 @@ echo "Variant and XML output matches the Java reference."
 echo "SYMMETRY_MATCHES rot2=1 mirror-h=1 mirror-v=1 none=1"
 echo "XML_FEATURE_MATCHES vertical=2 seed=1 groups=1 diagonal-order=1 metadata=3"
 echo "EXIT_CODES no-answer=1 input-error=2 solve-dp=2"
+echo "ATTEMPTS_CHECKS limited-generate=1 limited-random=1 unlimited-generate=1 unlimited-random=1 invalid=1"
 echo "TypeScript output matches the Java reference."

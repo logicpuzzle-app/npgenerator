@@ -41,7 +41,8 @@ the forbidden number, and the generation retry limit. Long-running calls
 should be made from a Web Worker.
 
 `solve`, `generate`, and `random` accept `--use <list>` and `--unique <list>`.
-`generate` and `random` additionally accept `--dp-min N` and `--dp-max N`;
+`generate` and `random` additionally accept `--dp-min N`, `--dp-max N`, and
+`--attempts N`;
 passing difficulty bounds to `solve` is an input error. Technique names are `localization`,
 `naked-pair`, `hidden-pair`, `naked-triple`, `hidden-triple`, `x-wing`, and
 `swordfish`; uniqueness names are `vh`, `cell`, and `block`. The special value
@@ -50,6 +51,8 @@ either list enables all of its entries. Difficulty bounds are inclusive and are
 swapped when given in reverse order; a negative maximum means unlimited.
 `generate` and `random` also accept `--forbidden N` (1–9). Out-of-range
 generated puzzles are discarded without resetting the random stream.
+`--attempts` defaults to 100 and accepts 0 for unlimited retries. Exit-1
+failures write a single `RESULT ...` detail line to stderr.
 
 `random` accepts `--symmetry rot4|rot2|mirror-h|mirror-v|none`. It defaults
 to the original `Random20.java` four-way rotation (`rot4`), with byte-identical

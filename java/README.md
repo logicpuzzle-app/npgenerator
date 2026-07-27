@@ -85,6 +85,7 @@ flag. Omitting `--use` or `--unique` enables every listed method.
 --dp-min N
 --dp-max N
 --forbidden N
+--attempts N
 ```
 
 Difficulty bounds are inclusive, default to 0 and unlimited, and are swapped
@@ -92,10 +93,12 @@ when the lower bound is greater than the upper bound. A negative `--dp-max` is
 unlimited. These bounds are generation filters and are rejected by `solve`.
 `--forbidden N` (1–N) keeps that digit out of explicit hint cells. Generated
 puzzles outside the requested difficulty range are discarded and generation
-continues with the same random stream.
+continues with the same random stream. `--attempts` sets both generation
+retry limits, defaults to 100, and accepts 0 for unlimited retries.
 
 Exit codes are 0 for success, 1 for no result/no answer, and 2 for invalid
-input. A missing `--seed` uses seed 0. `random` accepts
+input. Exit-1 failures write a single `RESULT ...` detail line to stderr.
+A missing `--seed` uses seed 0. `random` accepts
 `--symmetry rot4|rot2|mirror-h|mirror-v|none`. The default `rot4` mode follows
 the four-way rotational symmetry used by the original
 `sample/Random20.java`, so omitting `--symmetry` preserves the original output

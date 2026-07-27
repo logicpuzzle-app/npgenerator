@@ -302,16 +302,6 @@ public class Utility {
 		return (int)(Math.sqrt(x)+1e-10);
 	}
 	
-	private static JavaRandom random = new JavaRandom(0);
-
-	public static void setRandom(JavaRandom source) {
-		random = source;
-	}
-
-	public static int random(int n){
-		return random.nextInt(n);
-	}
-	
 	public static void printGrid(int[] grid , int size){
 		for(int i=0;i<size;i++){
 			for(int j=0;j<size;j++){

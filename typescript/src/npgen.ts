@@ -43,6 +43,7 @@ export interface NpGenOptions {
   dpMin: number;
   dpMax: number;
   forbidden: number;
+  attempts?: number;
 }
 
 export const STANDARD_BLOCK = new BlockConstraint(
@@ -74,6 +75,7 @@ export function defaultOptions(): NpGenOptions {
     dpMin: 0,
     dpMax: 2147483647,
     forbidden: -1,
+    attempts: 100,
   };
 }
 
@@ -120,7 +122,12 @@ export function generate(
   );
   generator.setMethod(options.method);
   generator.setForbidden(options.forbidden);
-  for (let attempt = 0; attempt < 100; attempt++) {
+  const attempts = options.attempts ?? 100;
+  for (
+    let attempt = 0;
+    attempts === 0 || attempt < attempts;
+    attempt++
+  ) {
     const problem = generator.generate();
     if (problem !== undefined) {
       const solved = solve(problem, options.method, variant);
@@ -193,7 +200,12 @@ export function generateRandom(
   variant: Variant = STANDARD_VARIANT,
   symmetry: Symmetry = "rot4",
 ): RandomGenerated | undefined {
-  for (let attempt = 0; attempt < 100; attempt++) {
+  const attempts = options.attempts ?? 100;
+  for (
+    let attempt = 0;
+    attempts === 0 || attempt < attempts;
+    attempt++
+  ) {
     const pattern = randomPattern(variant.size, hints, random, symmetry);
     const generated = generate(pattern, random, options, variant);
     if (generated !== undefined) return { pattern, generated };

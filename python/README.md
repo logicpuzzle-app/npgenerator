@@ -47,10 +47,12 @@ comma-separated. Omitting these options enables every technique and
 uniqueness rule. `none` may be supplied alone to disable all corresponding
 flags.
 
-`generate` and `random` also accept `--dp-min N`, `--dp-max N`, and
-`--forbidden N` (1 through the board size). A negative `--dp-max` means no
+`generate` and `random` also accept `--dp-min N`, `--dp-max N`,
+`--forbidden N` (1 through the board size), and `--attempts N`. A negative `--dp-max` means no
 upper limit, and reversed difficulty bounds are swapped. Difficulty bounds
 are rejected by `solve`; out-of-range forbidden values are input errors.
+`--attempts` defaults to 100 and accepts 0 for unlimited retries. Exit-1
+failures write a single `RESULT ...` detail line to stderr.
 
 `random` accepts `--symmetry rot4|rot2|mirror-h|mirror-v|none`. The default
 `rot4` mode exactly preserves the original `Random20.java` four-way

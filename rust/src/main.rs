@@ -132,6 +132,7 @@ struct CommandOptions {
     dp_min: i32,
     dp_max: i32,
     forbidden: i32,
+    attempts: usize,
 }
 
 impl Default for CommandOptions {
@@ -141,6 +142,7 @@ impl Default for CommandOptions {
             dp_min: 0,
             dp_max: i32::MAX,
             forbidden: -1,
+            attempts: 100,
         }
     }
 }
@@ -251,7 +253,9 @@ fn generate(
     );
     generator.set_method(options.method);
     generator.set_forbidden(options.forbidden);
-    for _ in 0..100 {
+    let mut attempt = 0;
+    while options.attempts == 0 || attempt < options.attempts {
+        attempt += 1;
         if let Some(problem) = generator.generate() {
             let solved = solve(&problem, options.method, variant);
             if solved.difficulty < options.dp_min as f64
@@ -313,7 +317,9 @@ fn generate_random(
     variant: &Variant,
     symmetry: Symmetry,
 ) -> Option<RandomGenerated> {
-    for _ in 0..100 {
+    let mut attempt = 0;
+    while options.attempts == 0 || attempt < options.attempts {
+        attempt += 1;
         let pattern = random_pattern(variant.size, hints, random, symmetry);
         if let Some(generated) = generate(
             &pattern,
@@ -405,6 +411,11 @@ fn command_options(
     {
         return Err(format!("--forbidden must be between 1 and {size}"));
     }
+    let attempts = parsed.i32_value("--attempts", 100)?;
+    if attempts < 0 {
+        return Err("--attempts must be non-negative".into());
+    }
+    options.attempts = attempts as usize;
     Ok(options)
 }
 
@@ -754,7 +765,13 @@ fn print_generated(generated: &Generated, size: usize) {
 }
 
 const SOLVER_OPTIONS: &[&str] = &["--use", "--unique"];
-const GENERATOR_OPTIONS: &[&str] = &["--use", "--unique", "--dp-min", "--dp-max"];
+const GENERATOR_OPTIONS: &[&str] = &[
+    "--use",
+    "--unique",
+    "--dp-min",
+    "--dp-max",
+    "--attempts",
+];
 const VARIANT_OPTIONS: &[&str] = &["--size", "--blocks", "--seed", "--format", "--out"];
 const VARIANT_FLAGS: &[&str] = &["--diagonal", "--no-vertical", "--no-horizontal"];
 
@@ -835,6 +852,13 @@ fn run(args: &[String]) -> Result<i32, String> {
                 || ((parsed.has("--use") || parsed.has("--unique"))
                     && solved.kind != AnswerKind::Unique)
             {
+                let result = match solved.kind {
+                    AnswerKind::NoAnswer => "NO_ANSWER",
+                    AnswerKind::Irregular => "IRREGULAR_PROBLEM",
+                    AnswerKind::Multiple => "MULTIPLE_ANSWER",
+                    _ => return Err("unexpected unsuccessful solve status".into()),
+                };
+                eprintln!("RESULT {result}");
                 return Ok(1);
             }
             if xml_output(&parsed) {
@@ -948,6 +972,10 @@ fn run(args: &[String]) -> Result<i32, String> {
                     &variant,
                 )
             else {
+                eprintln!(
+                    "RESULT GENERATE_FAILED attempts={}",
+                    command.attempts
+                );
                 return Ok(1);
             };
             if xml_output(&parsed) {
@@ -1015,6 +1043,10 @@ fn run(args: &[String]) -> Result<i32, String> {
                     symmetry,
                 )
             else {
+                eprintln!(
+                    "RESULT GENERATE_FAILED attempts={}",
+                    command.attempts
+                );
                 return Ok(1);
             };
             if xml_output(&parsed) {

@@ -134,16 +134,20 @@ diff -u "$RESULTS/java-option-solve.out" \
 
 set +e
 "$JAVA" solve "$TESTDATA/problem-heart.txt" --use localization \
-    > "$RESULTS/java-option-solve-limited.out"
+    > "$RESULTS/java-option-solve-limited.out" \
+    2> "$RESULTS/java-option-solve-limited.err"
 java_limited_exit=$?
 "$PYTHON" npgen.py solve "$TESTDATA/problem-heart.txt" --use localization \
-    > "$RESULTS/python-option-solve-limited.out"
+    > "$RESULTS/python-option-solve-limited.out" \
+    2> "$RESULTS/python-option-solve-limited.err"
 python_limited_exit=$?
 set -e
 [ "$java_limited_exit" -eq 1 ]
 [ "$python_limited_exit" -eq "$java_limited_exit" ]
 diff -u "$RESULTS/java-option-solve-limited.out" \
     "$RESULTS/python-option-solve-limited.out"
+diff -u "$RESULTS/java-option-solve-limited.err" \
+    "$RESULTS/python-option-solve-limited.err"
 
 "$JAVA" generate "$TESTDATA/pattern-heart.txt" --seed 42 \
     --use localization > "$RESULTS/java-option-use.out"
@@ -284,9 +288,35 @@ cmp "$RESULTS/java-xml-no-lines-out.xml" \
 cmp "$RESULTS/java-unique-none.out" "$RESULTS/python-unique-none.out"
 
 set +e
+"$JAVA" solve "$TESTDATA/no-answer.txt" \
+    > "$RESULTS/java-no-answer.stdout" \
+    2> "$RESULTS/java-no-answer.stderr"
+java_no_answer_exit=$?
 "$PYTHON" npgen.py solve "$TESTDATA/no-answer.txt" \
     > "$RESULTS/no-answer.stdout" 2> "$RESULTS/no-answer.stderr"
 no_answer_exit=$?
+"$JAVA" random --hints 20 --seed 0 --attempts 1 \
+    > "$RESULTS/java-attempts-limited.stdout" \
+    2> "$RESULTS/java-attempts-limited.stderr"
+java_attempts_limited_exit=$?
+"$PYTHON" npgen.py random --hints 20 --seed 0 --attempts 1 \
+    > "$RESULTS/attempts-limited.stdout" \
+    2> "$RESULTS/attempts-limited.stderr"
+attempts_limited_exit=$?
+"$JAVA" generate "$TESTDATA/pattern-heart.txt" \
+    --seed 0 --attempts 1 \
+    > "$RESULTS/java-attempts-limited-generate.stdout" \
+    2> "$RESULTS/java-attempts-limited-generate.stderr"
+java_attempts_limited_generate_exit=$?
+"$PYTHON" npgen.py generate "$TESTDATA/pattern-heart.txt" \
+    --seed 0 --attempts 1 \
+    > "$RESULTS/attempts-limited-generate.stdout" \
+    2> "$RESULTS/attempts-limited-generate.stderr"
+attempts_limited_generate_exit=$?
+"$PYTHON" npgen.py generate "$TESTDATA/pattern-heart.txt" \
+    --seed 42 --attempts -1 > "$RESULTS/attempts-invalid.stdout" \
+    2> "$RESULTS/attempts-invalid.stderr"
+attempts_invalid_exit=$?
 "$PYTHON" npgen.py solve "$RESULTS/missing.txt" \
     > "$RESULTS/input-error.stdout" 2> "$RESULTS/input-error.stderr"
 input_error_exit=$?
@@ -294,9 +324,36 @@ input_error_exit=$?
     > "$RESULTS/solve-dp.stdout" 2> "$RESULTS/solve-dp.stderr"
 solve_dp_exit=$?
 set -e
+[ "$java_no_answer_exit" -eq 1 ]
 [ "$no_answer_exit" -eq 1 ]
+[ "$java_attempts_limited_exit" -eq 1 ]
+[ "$attempts_limited_exit" -eq 1 ]
+[ "$java_attempts_limited_generate_exit" -eq 1 ]
+[ "$attempts_limited_generate_exit" -eq 1 ]
+[ "$attempts_invalid_exit" -eq 2 ]
 [ "$input_error_exit" -eq 2 ]
 [ "$solve_dp_exit" -eq 2 ]
+test ! -s "$RESULTS/no-answer.stdout"
+cmp "$RESULTS/java-no-answer.stderr" "$RESULTS/no-answer.stderr"
+test ! -s "$RESULTS/attempts-limited.stdout"
+cmp "$RESULTS/java-attempts-limited.stderr" \
+    "$RESULTS/attempts-limited.stderr"
+test ! -s "$RESULTS/attempts-limited-generate.stdout"
+cmp "$RESULTS/java-attempts-limited-generate.stderr" \
+    "$RESULTS/attempts-limited-generate.stderr"
+
+"$JAVA" generate "$TESTDATA/pattern-heart.txt" \
+    --seed 42 --attempts 0 > "$RESULTS/java-attempts-unlimited-generate"
+"$PYTHON" npgen.py generate "$TESTDATA/pattern-heart.txt" \
+    --seed 42 --attempts 0 > "$RESULTS/python-attempts-unlimited-generate"
+cmp "$RESULTS/java-attempts-unlimited-generate" \
+    "$RESULTS/python-attempts-unlimited-generate"
+"$JAVA" random --hints 20 --seed 40 --attempts 0 \
+    > "$RESULTS/java-attempts-unlimited-random"
+"$PYTHON" npgen.py random --hints 20 --seed 40 --attempts 0 \
+    > "$RESULTS/python-attempts-unlimited-random"
+cmp "$RESULTS/java-attempts-unlimited-random" \
+    "$RESULTS/python-attempts-unlimited-random"
 
 "$PYTHON" npgen.py bench --count 1 --seed 1 > "$RESULTS/bench.out"
 grep -q '^COUNT 1$' "$RESULTS/bench.out"
@@ -313,4 +370,5 @@ echo "OPTION_MATCHES solve=3 generate=6 random=1"
 echo "XML_FEATURE_MATCHES vertical=2 seed=1 groups=1 diagonal-order=1 metadata=3"
 echo "EXPECTED_OUTPUT_MATCHES 6"
 echo "EXIT_CODES no-answer=1 input-error=2 solve-dp=2"
+echo "ATTEMPTS_CHECKS limited-generate=1 limited-random=1 unlimited-generate=1 unlimited-random=1 invalid=1"
 echo "BENCH count=1: OK"

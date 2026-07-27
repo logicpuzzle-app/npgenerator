@@ -219,9 +219,35 @@ cmp "$results/java-xml-no-lines.xml" "$results/rust-xml-no-lines.xml"
 cmp "$results/java-unique-none" "$results/rust-unique-none"
 
 set +e
+"$java_dir/run.sh" solve "$testdata_dir/no-answer.txt" \
+    > "$results/java-no-answer.stdout" \
+    2> "$results/java-no-answer.stderr"
+java_no_answer_exit=$?
 ./run.sh solve "$testdata_dir/no-answer.txt" \
     > "$results/no-answer.stdout" 2> "$results/no-answer.stderr"
 no_answer_exit=$?
+"$java_dir/run.sh" random --hints 20 --seed 0 --attempts 1 \
+    > "$results/java-attempts-limited.stdout" \
+    2> "$results/java-attempts-limited.stderr"
+java_attempts_limited_exit=$?
+./run.sh random --hints 20 --seed 0 --attempts 1 \
+    > "$results/attempts-limited.stdout" \
+    2> "$results/attempts-limited.stderr"
+attempts_limited_exit=$?
+"$java_dir/run.sh" generate "$testdata_dir/pattern-heart.txt" \
+    --seed 0 --attempts 1 \
+    > "$results/java-attempts-limited-generate.stdout" \
+    2> "$results/java-attempts-limited-generate.stderr"
+java_attempts_limited_generate_exit=$?
+./run.sh generate "$testdata_dir/pattern-heart.txt" \
+    --seed 0 --attempts 1 \
+    > "$results/attempts-limited-generate.stdout" \
+    2> "$results/attempts-limited-generate.stderr"
+attempts_limited_generate_exit=$?
+./run.sh generate "$testdata_dir/pattern-heart.txt" \
+    --seed 42 --attempts -1 > "$results/attempts-invalid.stdout" \
+    2> "$results/attempts-invalid.stderr"
+attempts_invalid_exit=$?
 ./run.sh solve "$results/missing.txt" \
     > "$results/input-error.stdout" 2> "$results/input-error.stderr"
 input_error_exit=$?
@@ -229,9 +255,36 @@ input_error_exit=$?
     > "$results/solve-dp.stdout" 2> "$results/solve-dp.stderr"
 solve_dp_exit=$?
 set -e
+[ "$java_no_answer_exit" -eq 1 ]
 [ "$no_answer_exit" -eq 1 ]
+[ "$java_attempts_limited_exit" -eq 1 ]
+[ "$attempts_limited_exit" -eq 1 ]
+[ "$java_attempts_limited_generate_exit" -eq 1 ]
+[ "$attempts_limited_generate_exit" -eq 1 ]
+[ "$attempts_invalid_exit" -eq 2 ]
 [ "$input_error_exit" -eq 2 ]
 [ "$solve_dp_exit" -eq 2 ]
+test ! -s "$results/no-answer.stdout"
+cmp "$results/java-no-answer.stderr" "$results/no-answer.stderr"
+test ! -s "$results/attempts-limited.stdout"
+cmp "$results/java-attempts-limited.stderr" \
+    "$results/attempts-limited.stderr"
+test ! -s "$results/attempts-limited-generate.stdout"
+cmp "$results/java-attempts-limited-generate.stderr" \
+    "$results/attempts-limited-generate.stderr"
+
+"$java_dir/run.sh" generate "$testdata_dir/pattern-heart.txt" \
+    --seed 42 --attempts 0 > "$results/java-attempts-unlimited-generate"
+./run.sh generate "$testdata_dir/pattern-heart.txt" \
+    --seed 42 --attempts 0 > "$results/rust-attempts-unlimited-generate"
+cmp "$results/java-attempts-unlimited-generate" \
+    "$results/rust-attempts-unlimited-generate"
+"$java_dir/run.sh" random --hints 20 --seed 40 --attempts 0 \
+    > "$results/java-attempts-unlimited-random"
+./run.sh random --hints 20 --seed 40 --attempts 0 \
+    > "$results/rust-attempts-unlimited-random"
+cmp "$results/java-attempts-unlimited-random" \
+    "$results/rust-attempts-unlimited-random"
 
 ./run.sh bench --count 1 --seed 1 > "$results/bench.out"
 grep -q '^COUNT 1$' "$results/bench.out"
@@ -246,4 +299,5 @@ echo "SYMMETRY_MATCHES rot2=1 mirror-h=1 mirror-v=1 none=1"
 echo "OPTION_MATCHES solve=2 generate=4 random=1"
 echo "XML_FEATURE_MATCHES vertical=2 seed=1 groups=1 diagonal-order=1 metadata=3"
 echo "EXIT_CODES no-answer=1 input-error=2 solve-dp=2"
+echo "ATTEMPTS_CHECKS limited-generate=1 limited-random=1 unlimited-generate=1 unlimited-random=1 invalid=1"
 echo "BENCH count=1: OK"

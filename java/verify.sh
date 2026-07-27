@@ -353,6 +353,18 @@ set +e
 ./run.sh solve testdata/no-answer.txt > "$RESULTS/no-answer.stdout" \
     2> "$RESULTS/no-answer.stderr"
 no_answer_exit=$?
+./run.sh random --hints 20 --seed 0 --attempts 1 \
+    > "$RESULTS/attempts-limited.stdout" \
+    2> "$RESULTS/attempts-limited.stderr"
+attempts_limited_exit=$?
+./run.sh generate testdata/pattern-heart.txt --seed 0 --attempts 1 \
+    > "$RESULTS/attempts-limited-generate.stdout" \
+    2> "$RESULTS/attempts-limited-generate.stderr"
+attempts_limited_generate_exit=$?
+./run.sh generate testdata/pattern-heart.txt --seed 42 --attempts -1 \
+    > "$RESULTS/attempts-invalid.stdout" \
+    2> "$RESULTS/attempts-invalid.stderr"
+attempts_invalid_exit=$?
 ./run.sh solve "$VERIFY_BUILD/missing.txt" > "$RESULTS/input-error.stdout" \
     2> "$RESULTS/input-error.stderr"
 input_error_exit=$?
@@ -361,8 +373,31 @@ input_error_exit=$?
 solve_dp_exit=$?
 set -e
 [ "$no_answer_exit" -eq 1 ]
+[ "$attempts_limited_exit" -eq 1 ]
+[ "$attempts_limited_generate_exit" -eq 1 ]
+[ "$attempts_invalid_exit" -eq 2 ]
 [ "$input_error_exit" -eq 2 ]
 [ "$solve_dp_exit" -eq 2 ]
+printf 'RESULT NO_ANSWER\n' > "$RESULTS/no-answer.expected"
+cmp "$RESULTS/no-answer.expected" "$RESULTS/no-answer.stderr"
+test ! -s "$RESULTS/no-answer.stdout"
+printf 'RESULT GENERATE_FAILED attempts=1\n' \
+    > "$RESULTS/attempts-limited.expected"
+cmp "$RESULTS/attempts-limited.expected" \
+    "$RESULTS/attempts-limited.stderr"
+test ! -s "$RESULTS/attempts-limited.stdout"
+cmp "$RESULTS/attempts-limited.expected" \
+    "$RESULTS/attempts-limited-generate.stderr"
+test ! -s "$RESULTS/attempts-limited-generate.stdout"
+
+./run.sh generate testdata/pattern-heart.txt --seed 42 --attempts 0 \
+    > "$RESULTS/attempts-unlimited-generate.out"
+diff -u testdata/expected/generate-heart-seed42.out \
+    "$RESULTS/attempts-unlimited-generate.out"
+./run.sh random --hints 20 --seed 40 --attempts 0 \
+    > "$RESULTS/attempts-unlimited-random.out"
+grep -q '^PATTERN$' "$RESULTS/attempts-unlimited-random.out"
+grep -q '^PROBLEM$' "$RESULTS/attempts-unlimited-random.out"
 
 ./run.sh solve testdata/xml-vertical-off.xml --unique none \
     > "$RESULTS/solve-unique-none.out"
@@ -384,4 +419,5 @@ echo "RANDOM_MATCHES 1"
 echo "SYMMETRY_MATCHES rot2=1 mirror-h=1 mirror-v=1 none=1"
 echo "EXPECTED_OUTPUT_MATCHES 6"
 echo "EXIT_CODES no-answer=1 input-error=2 solve-dp=2"
+echo "ATTEMPTS_CHECKS limited-generate=1 limited-random=1 unlimited-generate=1 unlimited-random=1 invalid=1"
 echo "BENCH count=1: OK"
